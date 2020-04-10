@@ -2,30 +2,31 @@
 
 You can use the `Tizen.MachineLearning.Inference.SingleShot` class, to load the existing neural network model or your own specific model from the storage. After loading the model, you can invoke it with a single instance of input data. Then, you can get the inference output result.
 
-The main Machine Learning Inference features are:
+The main features of SingleShot include:
 
-- Managing tensor information
+- [Managing tensor information](#manage)
 
   Tensor information is the metadata that contains dimensions and types of tensors.
-  You can [configure the input and the output Tensor Information](#manage) such as name, data type, and dimension.
+  You can configure the input and the output Tensor Information such as name, data type, and dimension.
 
-- Loading a neural network model and configuring a runtime environment
+- [Loading a neural network model and configuring a runtime environment](#load)
 
-  You can [load the neural network model from storage and configure a runtime environment](#load).
+  You can load the neural network model from storage and configure a runtime environment.
 
-- Invoking the neural network model with input data
+- [Invoking the neural network model with input data](#invoke)
 
-  After setting up the SingleShot instance with its required information, you can [invoke the model with the input data and get the inference output result](#invoke).
+  After setting up the SingleShot instance with its required information, you can invoke the model with the input data and get the inference output result.
 
-- Fetching the inference result after invoking
+- [Fetching the inference result after invoking](#fetch)
 
-  You can [fetch the inference result](#fetch) after invoking the respective model.
+  You can fetch the inference result after invoking the respective model.
 
 ## Prerequisites
 
 To enable your application to use the Machine Learning Inference API functionality:
 
 1. To use the methods and properties of the `Tizen.MachineLearning.Inference.SingleShot` class or its related classes such as `Tizen.MachineLearning.Inference.TensorsData` and `Tizen.MachineLearning.Inference.TensorsInfo`, include the `Tizen.MachineLearning.Inference` namespace in your application:
+
     ```C#
     using Tizen.MachineLearning.Inference;
     ```
@@ -45,9 +46,9 @@ To enable your application to use the Machine Learning Inference API functionali
 <a name="manage"></a>
 ## Managing Tensor Information
 
-In the example mentioned in this page, the MobileNet v1 model for TensorFlow Lite is used. This model is used for image classification. The input data type of the model is specified as bit width of each Tensor and its input dimension is `3 X 224 X 224`. The output data type of the model is the same as the input datatype but the output dimension is `1001 X 1 X 1 X 1`.
+In the example mentioned in this page, the MobileNet v1 model for TensorFlow Lite is used. This model is used for image classification. The input data type of the model is specified as bit width of each Tensor and its input dimension is `3 X 224 X 224`. The output data type of the model is the same as the input data type but the output dimension is `1001 X 1 X 1 X 1`.
 
-To configure the tensor information, you need to create a new instance of the `Tizen.MachineLearning.Inference.TensorsInfo` class. Then, you can add the tensor information such as datatype, dimension, and name (optional) as shown in the following code:
+To configure the tensor information, you need to create a new instance of the `Tizen.MachineLearning.Inference.TensorsInfo` class. Then, you can add the tensor information such as data type, dimension, and name (optional) as shown in the following code:
 
 ```C#
 /* Input Dimension: 3 * 224 * 224 */
@@ -55,9 +56,13 @@ TensorsInfo in_info = new TensorsInfo();
 in_info.AddTensorInfo(TensorType.UInt8, new int[4] { 3, 224, 224, 1 });
 
 /* Output Dimension: 1001 for classification */
-TensorsData out_info = new TensorsInfo();
+TensorsInfo out_info = new TensorsInfo();
 out_info.AddTensorInfo(TensorType.UInt8, new int[4] { 1001, 1, 1, 1 });
 ```
+
+> **Note**
+>
+> The maximum size of `TensorsInfo` is 16. If the limit is exceeded, then `IndexOutOfRangeException` is raised.
 
 <a name="load"></a>
 ## Loading Neural Network Model and Configuring Runtime Environment
@@ -69,7 +74,6 @@ out_info.AddTensorInfo(TensorType.UInt8, new int[4] { 1001, 1, 1, 1 });
     string model_path = ResourcePath + "models/mobilenet_v1_1.0_224_quant.tflite";
     ```
 
-
 2. You can load the neural network model from storage and configure a runtime environment with the `Tizen.MachineLearning.Inference.SingleShot` class. The first parameter is the absolute path to the neural network model file. The remaining two parameters are the input and the output `TensorsInfo` instances. If there is an invalid parameter, `ArgumentException` is raised:
 
     ```C#
@@ -80,7 +84,7 @@ out_info.AddTensorInfo(TensorType.UInt8, new int[4] { 1001, 1, 1, 1 });
 <a name="invoke"></a>
 ## Invoking Neural Network Model using Input Data
 
-To invoke the neural network model, you need to create the `Tizen.MachineLearning.Inference.TensorsData` instance to pass the input data of the model. You can add various types of tensor data, which are already specified in the `TensorInfo` instance. However, the maximum size of `TensorsData` is 16. If the limit is exceeded, then `IndexOutOfRangeException` is raised. Input data is passed in a byte array format, byte[]:
+To invoke the neural network model, you need to create the `Tizen.MachineLearning.Inference.TensorsData` instance to pass the input data of the model. You can add various types of tensor data, which are already specified in the `TensorsInfo` instance. If the limit is exceeded, then `ArgumentException` is raised. Input data is passed in a byte array format, byte[]:
 
 ```C#
 /* Input data for test */
@@ -91,7 +95,7 @@ TensorsData in_data = in_info.GetTensorsData();
 in_data.SetTensorData(0, in_buffer);
 ```
 
-After preparing the input data, you can invoke the model and get the inference output result. The `SingleShot.Invoke()` method gets the input data to be inferred as a parameter and returns the `Tizen.MachineLearning.InferenceTensorsData` instance, which contains the inference result:
+After preparing the input data, you can invoke the model and get the inference output result. The `SingleShot.Invoke()` method gets the input data to be inferred as a parameter and returns the `Tizen.MachineLearning.Inference.TensorsData` instance, which contains the inference result:
 
 ```C#
 /* Invoke the model and get the inference result */
@@ -103,8 +107,7 @@ TensorsData out_data = single.Invoke(in_data);
 
 After calling the `Invoke()` method of the `Tizen.MachineLearning.Inference.SingleShot` class,
 the `Tizen.MachineLearning.Inference.TensorsData` instance is returned as the inference result.
-The result can have multiple output data. Therefore, you have to fetch each data using the `GetTensorData()` method. If the limit is exceeded, then `IndexOutOfRangeException` is raised:
-
+The result can have multiple output data. Therefore, you have to fetch each data using the `GetTensorData()` method. If the limit is exceeded, then `ArgumentException` is raised:
 
 ```C#
 /* Get the first Tensor data from the inference result */
@@ -120,4 +123,4 @@ var count = out_data.Count;
 
 ## Related Information
 - Dependencies
-  -   Tizen 5.5 and Higher
+  - Tizen 5.5 and Higher
